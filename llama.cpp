@@ -2275,6 +2275,8 @@ struct llama_context {
     int64_t t_p_eval_us = 0;
     int64_t t_eval_us   = 0;
 
+    std::vector<int64_t> t_eval_per_token_us;
+
     int64_t t_compute_start_us = 0;
     int64_t n_queued_tokens = 0;
 
@@ -17272,6 +17274,7 @@ void llama_synchronize(struct llama_context * ctx) {
     // add the evaluation to the stats
     if (ctx->n_queued_tokens == 1) {
         ctx->t_eval_us += ggml_time_us() - ctx->t_compute_start_us;
+        ctx->t_eval_per_token_us.push_back(ggml_time_us() - ctx->t_compute_start_us);
         ctx->n_eval++;
     } else if (ctx->n_queued_tokens > 1) {
         ctx->t_p_eval_us += ggml_time_us() - ctx->t_compute_start_us;
@@ -17864,6 +17867,14 @@ void llama_print_timings(struct llama_context * ctx) {
     LLAMA_LOG_INFO("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
             __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
     LLAMA_LOG_INFO("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
+
+    // join ctx->t_eval_per_token_us into a string delimited by ','
+    std::string eval_per_token_str;
+    for (uint64_t t : ctx->t_eval_per_token_us) {
+        eval_per_token_str += std::to_string(t) + ",";
+    }
+
+    LLAMA_LOG_INFO("%s: eval per token times = %s\n", __func__, eval_per_token_str.c_str());
 }
 
 void llama_reset_timings(struct llama_context * ctx) {
