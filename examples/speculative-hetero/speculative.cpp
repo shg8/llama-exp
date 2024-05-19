@@ -587,25 +587,6 @@ int main(int argc, char ** argv) {
     LOG_TEE("n_accept  = %d\n", n_accept);
     LOG_TEE("accept    = %.3f%%\n", 100.0f * n_accept / n_drafted);
 
-    // append results to csv
-    {
-        FILE * f = fopen("speculative.csv", "w");
-        // write header if file is empty
-        if (f && ftell(f) == 0) {
-            fprintf(f, "n_input,n_predict,n_drafted,n_accept,t_enc,t_dec,n_seq_dft,n_draft,n_predict,n_parallel,n_threads,n_threads_batch,n_threads_batch_draft,n_gpu_layers,n_gpu_layers_draft,t_enc_sec,t_dec_sec\n");
-        }
-        if (f) {
-            fprintf(f, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f\n",
-                    n_input, n_predict, n_drafted, n_accept,
-                    (int) (t_enc_end - t_enc_start), (int) (t_dec_end - t_dec_start),
-                    n_seq_dft, n_draft, params.n_predict, params.n_parallel,
-                    params.n_threads, params.n_threads_batch, params.n_threads_batch_draft,
-                    params.n_gpu_layers, params.n_gpu_layers_draft,
-                    (t_enc_end - t_enc_start) / 1e6f, (t_dec_end - t_dec_start) / 1e6f);
-            fclose(f);
-        }
-    }
-
     LOG_TEE("\ndraft:\n");
     llama_print_timings(ctx_dft);
 
